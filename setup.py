@@ -74,7 +74,7 @@ setup(
     # Author details
     author="Yang, Heng",
     author_email="hy345@exeter.ac.uk",
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     packages=find_packages(),
     include_package_data=True,
     exclude_package_date={"": [".gitignore"]},
@@ -94,11 +94,12 @@ setup(
         "pytorch_warmup",
         "termcolor",
         "gitpython",  # need git installed in your OS
-        "transformers>=4.18.0",
+        "transformers<=4.29.0",
         "torch>=1.0.0",
         "sentencepiece",
         "protobuf<4.0.0",
         "pandas",
+        "numpy==1.26.4",
     ],
     extras_require=extras,
 )

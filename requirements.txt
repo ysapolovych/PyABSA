@@ -11,7 +11,7 @@ tqdm
 pytorch_warmup
 termcolor
 gitpython  # need git installed in your OS
-transformers
+transformers<=4.29.0
 torch>1.0.0
 sentencepiece
 protobuf<4.0.0
@@ -26,7 +26,7 @@ arxiv
 tokenizers
 scikit-learn
 datasets
-numpy
+numpy==1.26.4
 requests
 packaging
 setuptools
