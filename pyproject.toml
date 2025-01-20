@@ -1,0 +1,78 @@
+[project]
+name = "pyabsa"
+version = "2.4.1+f0.1"
+description = "Python ABSA Package"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "YANG, HENG", email = "hy345@exeter.ac.uk"}
+]
+
+dependencies=[
+    "findfile>=2.0.0",
+    "autocuda>=0.16",
+    "metric-visualizer>=0.9.6",
+    "boostaug>=2.3.5",
+    "spacy",
+    "networkx",
+    "seqeval",
+    "update-checker",
+    "typing_extensions",
+    "tqdm",
+    "pytorch_warmup",
+    "termcolor",
+    "gitpython",
+    "transformers<=4.29.0",
+    "torch>=1.0.0",
+    "sentencepiece",
+    "protobuf<4.0.0",
+    "pandas",
+    "numpy==1.26.4",
+]
+
+[project.optional-dependencies]
+docs = [
+    "recommonmark",
+    "nbsphinx",
+    "sphinx-autobuild",
+    "sphinx-rtd-theme",
+    "sphinx-markdown-tables",
+    "sphinx-copybutton"
+]
+test = [
+    "docformatter",
+    "isort",
+    "flake8",
+    "pytest",
+    "pytest-xdist"
+]
+deploy = [
+    "twine",
+    "wheel",
+    "setuptools",
+    "gradio"
+]
+tensorflow = [
+    "tensorflow",
+    "tensorflow_hub",
+    "tensorflow_text",
+    "tensorboardX",
+    "tensorflow-estimator"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.setuptools]
+packages = ["pyabsa"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.hatch.build.targets.wheel]
+packages = ["pyabsa"]
+
+[tool.ruff]
+line-length=120
