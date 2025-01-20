@@ -65,9 +65,6 @@ tensorflow = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.setuptools]
-packages = ["pyabsa"]
-
 [tool.pytest.ini_options]
 pythonpath = ["."]
 
