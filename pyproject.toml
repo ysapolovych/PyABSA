@@ -29,6 +29,7 @@ dependencies=[
     "sentencepiece",
     "protobuf<4.0.0",
     "pandas",
+    "pyarrow>=19.0.0",
     "regex>=2024.11.6",
     "numpy==1.26.4",
 ]
