@@ -126,13 +126,15 @@ class SentimentClassifier(InferenceModel):
 
                 self.tokenizer = self.config.tokenizer
 
-                if kwargs.get("verbose", False):
+                self.verbose = kwargs.get("verbose", False)
+
+                if self.verbose:
                     fprint("Config used in Training:")
                     print_args(self.config)
 
             except Exception as e:
                 raise RuntimeError(
-                    "Fail to load the model from {}! "
+                    "Failed to load the model from {}! "
                     "Please make sure the version of checkpoint and PyABSA are compatible."
                     " Try to remove he checkpoint and download again"
                     " \nException: {} ".format(checkpoint, e)
@@ -476,7 +478,7 @@ class SentimentClassifier(InferenceModel):
         except Exception as e:
             fprint("Can not save result: {}, Exception: {}".format(text_raw, e))
 
-        if len(results) > 1:
+        if len(results) > 1 and self.verbose:
             fprint("Total samples:{}".format(n_total))
             fprint("Labeled samples:{}".format(n_labeled))
             fprint(
