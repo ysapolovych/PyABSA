@@ -10,6 +10,7 @@ authors = [
 ]
 
 dependencies=[
+    "pip>=22.2.2",
     "findfile>=2.0.0",
     "autocuda>=0.16",
     "metric-visualizer>=0.9.6",
@@ -28,6 +29,7 @@ dependencies=[
     "sentencepiece",
     "protobuf<4.0.0",
     "pandas",
+    "regex>=2024.11.6",
     "numpy==1.26.4",
 ]
 
@@ -59,6 +61,12 @@ tensorflow = [
     "tensorflow_text",
     "tensorboardX",
     "tensorflow-estimator"
+]
+dev = [
+    "pyabsa[docs]",
+    "pyabsa[test]",
+    "pyabsa[deploy]",
+    "pyabsa[tensorflow]"
 ]
 
 [build-system]
