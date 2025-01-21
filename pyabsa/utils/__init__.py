@@ -19,6 +19,12 @@ from pyabsa.utils.data_utils.dataset_manager import (
     download_all_available_datasets,
     download_dataset_by_name,
 )
+
+from pyabsa.utils.data_utils.preprocessing import (
+    prep_text_for_apc,
+    prep_text_for_apc_simple,
+)
+
 from pyabsa.utils.file_utils.file_utils import load_dataset_from_file
 
 from pyabsa.utils.ensemble_prediction.ensemble_prediction import VoteEnsemblePredictor
