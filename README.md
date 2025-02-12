@@ -38,23 +38,29 @@ We have deployed the demos on Huggingface Space, you can try them online.
 ## Usage Examples
 
 We have prepared many examples for different tasks. Please refer to [Examples](./examples-v2) for more usage examples.
+Refer to [apc_custom](examples-v2/aspect_polarity_classification/apc_custom.py) for features added in this fork.
 
 ## Installation
-
-### install via pip
-
-To use PyABSA, install the latest version from pip or source code:
-
-```bash
-pip install -U pyabsa
-```
 
 ### install via source
 
 ```bash
 git clone https://github.com/yangheng95/PyABSA --depth=1
 cd PyABSA 
-python setup.py install
+pip install -e .
+```
+Or for dev version:
+
+```bash
+pip install -e ".[dev]"
+```
+
+### install via pip
+
+To install **original, non-forked version**, use pip:
+
+```bash
+pip install -U pyabsa
 ```
 
 ## Quick-Start

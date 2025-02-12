@@ -38,6 +38,36 @@ class SentimentClassifier(InferenceModel):
     task_code = TaskCodeOption.Aspect_Polarity_Classification
 
     def __init__(self, checkpoint=None, **kwargs):
+        """
+        Initialize the sentiment classifier for Aspect Polarity Classification (APC).
+        :param checkpoint: 
+            The checkpoint to initialize the classifier from. If this is not a string, it is interpreted as a tuple 
+            containing the model, configuration, and tokenizer. If it is a string, it should specify a directory 
+            or file path containing a .state_dict, .model, .tokenizer, and .config.
+        :type checkpoint: str or tuple, optional
+        :param auto_device: 
+            A boolean flag (passed via **kwargs) indicating whether the model should automatically select 
+            an available device (CPU or GPU) for inference or training.
+        :type auto_device: bool
+        :param verbose: 
+            A boolean flag (passed via **kwargs) that controls verbosity, such as printing of configuration 
+            details and loading status.
+        :type verbose: bool
+        :param load_dataset: 
+            A boolean flag (passed via **kwargs) indicating whether to construct an inference dataset 
+            (if needed) after loading the model.
+        :type load_dataset: bool
+        :raises ValueError: 
+            If the provided checkpoint indicates a fine-tuned model (i.e., contains "fine-tuned") which is 
+            not directly supported by this interface.
+        :raises RuntimeError: 
+            If any error occurs while loading model artifacts from the specified checkpoint (e.g., 
+            configuration, tokenizer, state dict).
+        This method loads the model, configuration, tokenizer, and sets up the dataset based on 
+        the type of model architecture (APC, BERT, or GloVe-based). It also ensures compatibility 
+        by automatically configuring the compute device if requested.
+        """
+        
         super().__init__(checkpoint, task_code=self.task_code, **kwargs)
 
         # load from a trainer
@@ -96,13 +126,15 @@ class SentimentClassifier(InferenceModel):
 
                 self.tokenizer = self.config.tokenizer
 
-                if kwargs.get("verbose", False):
+                self.verbose = kwargs.get("verbose", False)
+
+                if self.verbose:
                     fprint("Config used in Training:")
                     print_args(self.config)
 
             except Exception as e:
                 raise RuntimeError(
-                    "Fail to load the model from {}! "
+                    "Failed to load the model from {}! "
                     "Please make sure the version of checkpoint and PyABSA are compatible."
                     " Try to remove he checkpoint and download again"
                     " \nException: {} ".format(checkpoint, e)
@@ -228,10 +260,12 @@ class SentimentClassifier(InferenceModel):
     ):
         """
         Predict the sentiment from a sentence or a list of sentences.
-        param: text: the sentence to be predicted.
+        param: text: the sentence or list of sentences to be predicted.
         param: print_result: whether to print the result.
         param: ignore_error: whether to ignore the error when predicting.
-        param: kwargs: other parameters.
+        param: kwargs:
+            - eval_batch_size (int): batch size for inference (default=32).
+            - merge_results (bool): whether to merge results with the same input text (default=True).
         """
         self.config.eval_batch_size = kwargs.get("eval_batch_size", 32)
         self.infer_dataloader = DataLoader(
@@ -444,7 +478,7 @@ class SentimentClassifier(InferenceModel):
         except Exception as e:
             fprint("Can not save result: {}, Exception: {}".format(text_raw, e))
 
-        if len(results) > 1:
+        if len(results) > 1 and self.verbose:
             fprint("Total samples:{}".format(n_total))
             fprint("Labeled samples:{}".format(n_labeled))
             fprint(
