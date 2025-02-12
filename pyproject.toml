@@ -1,6 +1,6 @@
 [project]
 name = "pyabsa"
-version = "2.4.1+f0.1"
+version = "2.4.1+f0.2"
 description = "Python ABSA Package"
 readme = "README.md"
 requires-python = ">=3.10"
