@@ -27,7 +27,7 @@ dependencies=[
     "transformers<=4.41.0",
     "torch>=1.0.0",
     "sentencepiece",
-    "protobuf<4.0.0",
+    "protobuf",
     "pandas",
     "pyarrow>=19.0.0",
     "regex>=2024.11.6",
