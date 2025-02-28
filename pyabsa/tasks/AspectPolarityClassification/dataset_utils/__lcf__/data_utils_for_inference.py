@@ -49,16 +49,15 @@ def parse_sample(text: str, verbose: bool = False):
                 .replace("[B-ASP]", "")
                 .replace("[E-ASP]", "")
             )
-            if len(aspects) == len(ref_sent):
-                sample += f"$LABEL${ref_sent[i]}"
-                samples.append(sample.replace("[TEMP]", "[ASP]"))
-            else:
+            if len(aspects) != len(ref_sent):
                 if verbose:
                     fprint(
-                        f"Warning: reference sentiment does not exist or its number {len(ref_sent)} "
-                        f"is not equal to aspect number {len(aspects)}, text: {_text}"
-                    )
-                    samples.append(sample.replace("[TEMP]", "[ASP]"))
+                            f"Warning: reference sentiment does not exist or its number {len(ref_sent)} "
+                            f"is not equal to aspect number {len(aspects)}, text: {_text}"
+                        )
+            else:
+                sample += f"$LABEL${ref_sent[i]}"
+            samples.append(sample.replace("[TEMP]", "[ASP]"))
 
     else:
         fprint(
