@@ -10,7 +10,6 @@ from typing import Union
 import numpy as np
 import torch
 import tqdm
-from findfile import find_file
 from sklearn import metrics
 from termcolor import colored
 from torch.utils.data import DataLoader
@@ -32,7 +31,8 @@ from ..dataset_utils.__plm__.data_utils_for_inference import BERTABSAInferenceDa
 from ..instructor.ensembler import APCEnsembler
 from pyabsa.utils.data_utils.dataset_manager import detect_infer_dataset
 from pyabsa.utils.pyabsa_utils import set_device, print_args, fprint, rprint
-
+from pyabsa.utils.exception_utils import CheckpointLoadException
+from pyabsa.utils.file_utils.file_utils import find_file_
 
 class SentimentClassifier(InferenceModel):
     task_code = TaskCodeOption.Aspect_Polarity_Classification
@@ -40,39 +40,39 @@ class SentimentClassifier(InferenceModel):
     def __init__(self, checkpoint=None, **kwargs):
         """
         Initialize the sentiment classifier for Aspect Polarity Classification (APC).
-        :param checkpoint: 
-            The checkpoint to initialize the classifier from. If this is not a string, it is interpreted as a tuple 
-            containing the model, configuration, and tokenizer. If it is a string, it should specify a directory 
+        :param checkpoint:
+            The checkpoint to initialize the classifier from. If this is not a string, it is interpreted as a tuple
+            containing the model, configuration, and tokenizer. If it is a string, it should specify a directory
             or file path containing a .state_dict, .model, .tokenizer, and .config.
         :type checkpoint: str or tuple, optional
-        :param auto_device: 
-            A boolean flag (passed via **kwargs) indicating whether the model should automatically select 
+        :param auto_device:
+            A boolean flag (passed via **kwargs) indicating whether the model should automatically select
             an available device (CPU or GPU) for inference or training.
         :type auto_device: bool
-        :param verbose: 
-            A boolean flag (passed via **kwargs) that controls verbosity, such as printing of configuration 
+        :param verbose:
+            A boolean flag (passed via **kwargs) that controls verbosity, such as printing of configuration
             details and loading status.
         :type verbose: bool
-        :param load_dataset: 
-            A boolean flag (passed via **kwargs) indicating whether to construct an inference dataset 
+        :param load_dataset:
+            A boolean flag (passed via **kwargs) indicating whether to construct an inference dataset
             (if needed) after loading the model.
         :type load_dataset: bool
-        :raises ValueError: 
-            If the provided checkpoint indicates a fine-tuned model (i.e., contains "fine-tuned") which is 
+        :raises ValueError:
+            If the provided checkpoint indicates a fine-tuned model (i.e., contains "fine-tuned") which is
             not directly supported by this interface.
-        :raises RuntimeError: 
-            If any error occurs while loading model artifacts from the specified checkpoint (e.g., 
+        :raises CheckpointLoadException:
+            If any error occurs while loading model artifacts from the specified checkpoint (e.g.,
             configuration, tokenizer, state dict).
-        This method loads the model, configuration, tokenizer, and sets up the dataset based on 
-        the type of model architecture (APC, BERT, or GloVe-based). It also ensures compatibility 
+        This method loads the model, configuration, tokenizer, and sets up the dataset based on
+        the type of model architecture (APC, BERT, or GloVe-based). It also ensures compatibility
         by automatically configuring the compute device if requested.
         """
-        
+
         super().__init__(checkpoint, task_code=self.task_code, **kwargs)
 
         # load from a trainer
-        if self.checkpoint and not isinstance(self.checkpoint, str):
-            fprint("Load sentiment classifier from trainer")
+        if isinstance(self.checkpoint, (tuple, list)):
+            fprint("Loading sentiment classifier from fine-tuned checkpoint")
             self.model = self.checkpoint[0]
             self.config = self.checkpoint[1]
             self.tokenizer = self.checkpoint[2]
@@ -81,21 +81,43 @@ class SentimentClassifier(InferenceModel):
             try:
                 if "fine-tuned" in self.checkpoint:
                     raise ValueError(
-                        "Do not support to directly load a fine-tuned model, please load a .state_dict or .model instead!"
+                        "PyABSA does not support direct loading of a fine-tuned model,"
+                        "please load a .state_dict or .model instead."
                     )
-                fprint("Load sentiment classifier from", self.checkpoint)
+                fprint("Loading sentiment classifier from", self.checkpoint)
 
-                state_dict_path = find_file(
-                    self.checkpoint, ".state_dict", exclude_key=["__MACOSX"]
+                state_dict_path = find_file_(
+                    search_path=self.checkpoint,
+                    file_extension=".state_dict",
+                    exclude_key=["__MACOSX"],
+                    recursive=True,
+                    raise_error=False,
                 )
-                model_path = find_file(
-                    self.checkpoint, ".model", exclude_key=["__MACOSX"]
+                if state_dict_path is None:
+                    model_path = find_file_(
+                        search_path=self.checkpoint,
+                        file_extension=".model",
+                        exclude_key=["__MACOSX"],
+                        recursive=True,
+                        raise_error=False,
+                    )
+                    assert model_path is not None, (
+                        f"Neither .model nor .state_dict files exist in {self.checkpoint}"
+                    )
+
+                tokenizer_path = find_file_(
+                    search_path=self.checkpoint,
+                    file_extension=".tokenizer",
+                    exclude_key=["__MACOSX"],
+                    recursive=True,
+                    raise_error=True,
                 )
-                tokenizer_path = find_file(
-                    self.checkpoint, ".tokenizer", exclude_key=["__MACOSX"]
-                )
-                config_path = find_file(
-                    self.checkpoint, ".config", exclude_key=["__MACOSX"]
+                config_path = find_file_(
+                    search_path=self.checkpoint,
+                    file_extension=".config",
+                    exclude_key=["__MACOSX"],
+                    recursive=True,
+                    raise_error=True,
                 )
 
                 fprint("config: {}".format(config_path))
@@ -108,21 +130,21 @@ class SentimentClassifier(InferenceModel):
                     self.config.auto_device = kwargs.get("auto_device", True)
                     set_device(self.config, self.config.auto_device)
 
-                if state_dict_path or model_path:
-                    if state_dict_path:
-                        self.model = APCEnsembler(
-                            self.config, load_dataset=False, **kwargs
-                        )
-                        self.model.load_state_dict(
-                            torch.load(
-                                state_dict_path, map_location=DeviceTypeOption.CPU
-                            ),
-                            strict=False,
-                        )
-                    elif model_path:
-                        self.model = torch.load(
-                            model_path, map_location=DeviceTypeOption.CPU
-                        )
+
+                if state_dict_path:
+                    self.model = APCEnsembler(
+                        self.config, load_dataset=False, **kwargs
+                    )
+                    self.model.load_state_dict(
+                        torch.load(
+                            state_dict_path, map_location=DeviceTypeOption.CPU
+                        ),
+                        strict=False,
+                    )
+                elif model_path:
+                    self.model = torch.load(
+                        model_path, map_location=DeviceTypeOption.CPU
+                    )
 
                 self.tokenizer = self.config.tokenizer
 
@@ -132,12 +154,14 @@ class SentimentClassifier(InferenceModel):
                     fprint("Config used in Training:")
                     print_args(self.config)
 
+            except FileNotFoundError as e:
+                raise FileNotFoundError from e
+            except AssertionError as e:
+                raise AssertionError from e
             except Exception as e:
-                raise RuntimeError(
-                    "Failed to load the model from {}! "
-                    "Please make sure the version of checkpoint and PyABSA are compatible."
-                    " Try to remove he checkpoint and download again"
-                    " \nException: {} ".format(checkpoint, e)
+                raise CheckpointLoadException(
+                    checkpoint_path=checkpoint,
+                    message=str(e),
                 )
 
         if isinstance(self.config.model, list):
@@ -274,7 +298,7 @@ class SentimentClassifier(InferenceModel):
         if text:
             self.dataset.prepare_infer_sample(text, ignore_error=ignore_error)
         else:
-            raise RuntimeError("Please specify your datasets path!")
+            raise RuntimeError("Please specify your datasets path or provide a dataset directly.")
         if isinstance(text, str):
             return self._run_prediction(print_result=print_result, **kwargs)[0]
         else:

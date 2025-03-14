@@ -343,12 +343,12 @@ def detect_infer_dataset(
                 except Exception as e:
                     if logger:
                         logger.error(
-                            "Fail to download dataset from https://github.com/yangheng95/ABSADatasets, please check your network connection"
+                            "Failed to download dataset from https://github.com/yangheng95/ABSADatasets, please check your network connection"
                         )
                         logger.info("Try to load {} dataset from Huggingface".format(d))
                     else:
                         fprint(
-                            "Fail to download dataset from https://github.com/yangheng95/ABSADatasets, please check your network connection"
+                            "Failed to download dataset from https://github.com/yangheng95/ABSADatasets, please check your network connection"
                         )
                         fprint("Try to load {} dataset from Huggingface".format(d))
                     download_dataset_by_name(

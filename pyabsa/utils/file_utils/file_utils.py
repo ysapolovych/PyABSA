@@ -7,10 +7,11 @@
 
 import json
 import os
+from pathlib import Path
 import pickle
 import sys
 import zipfile
-from typing import Union, List
+from typing import Union, List, Optional
 
 import numpy as np
 import requests
@@ -498,3 +499,67 @@ def save_model(config, model, tokenizer, save_path, **kwargs):
     else:
         raise ValueError("Invalid save_mode: {}".format(config.save_mode))
     model.to(config.device)
+
+
+def find_file_(
+    search_path: Union[str, Path],
+    file_extension: str,
+    exclude_key: Optional[List[str]] = None,
+    *,
+    recursive: bool = True,
+    raise_error: bool = False
+) -> Optional[str]:
+    """
+    Find a file with the given extension in the search path.
+
+    Args:
+        search_path: Directory to search in
+        file_extension: File extension to look for (e.g., ".model", ".config")
+        exclude_key: List of strings to exclude from search results
+        recursive: if True, search with rglob
+        raise_error: Whether to raise FileNotFoundError if no file is found
+
+    Returns:
+        Path to the file if found, None otherwise
+    """
+    assert search_path is not None, "Provided search_path is None"
+
+    # Convert to Path object
+    path = Path(search_path)
+
+    # Check if path is a file
+    if path.is_file():
+        path = path.parent
+
+    # Ensure the extension starts with a dot
+    if not file_extension.startswith('.'):
+        file_extension = f".{file_extension}"
+
+    # Set default exclude_key if None
+    if exclude_key is None:
+        exclude_key = []
+
+    # Find all matching files
+    matching_files = []
+
+    if recursive:
+        files = [f for f in path.rglob(f"**/*{file_extension}")]
+    else:
+        files = [f for f in path.glob(f"**/*{file_extension}")]
+
+    for file_path in files:
+        # Check if file path contains any exclude key
+        if any(ex_key in str(file_path) for ex_key in exclude_key):
+            continue
+        matching_files.append(str(file_path.resolve()))
+
+    # Return the first matching file if found
+    if len(matching_files) > 0:
+        # Sort by path length to get the shallowest path
+        matching_files.sort(key=len)
+        return matching_files[0]
+
+    # Raise error or return None
+    if raise_error:
+        raise FileNotFoundError(f"No file with extension {file_extension} found in {search_path}")
+    return None
