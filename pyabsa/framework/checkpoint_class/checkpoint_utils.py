@@ -97,7 +97,7 @@ def available_checkpoints(
             json.dump(response.json(), f)
     except Exception as e:
         fprint(
-            "Fail to download checkpoints info from huggingface space, try to download from local"
+            "Failed to download checkpoints info from huggingface space, try to download from local"
         )
     with open("./checkpoints.json", "r", encoding="utf8") as f:
         checkpoint_map = json.load(f)
