@@ -28,7 +28,7 @@ from .apc_utils_for_dlcf_dca import (
 )
 
 
-def parse_sample(text):
+def parse_sample(text: str, verbose: bool = False):
     if "[B-ASP]" not in text and "[ASP]" not in text:
         # if '[B-ASP]' not in text or '[E-ASP]' not in text:
         text = " [B-ASP]Global Sentiment[E-ASP] " + text
@@ -49,15 +49,15 @@ def parse_sample(text):
                 .replace("[B-ASP]", "")
                 .replace("[E-ASP]", "")
             )
-            if len(aspects) == len(ref_sent):
-                sample += f"$LABEL${ref_sent[i]}"
-                samples.append(sample.replace("[TEMP]", "[ASP]"))
+            if len(aspects) != len(ref_sent):
+                if verbose:
+                    fprint(
+                            f"Warning: reference sentiment does not exist or its number {len(ref_sent)} "
+                            f"is not equal to aspect number {len(aspects)}, text: {_text}"
+                        )
             else:
-                fprint(
-                    f"Warning: reference sentiment does not exist or its number {len(ref_sent)} "
-                    f"is not equal to aspect number {len(aspects)}, text: {_text}"
-                )
-                samples.append(sample.replace("[TEMP]", "[ASP]"))
+                sample += f"$LABEL${ref_sent[i]}"
+            samples.append(sample.replace("[TEMP]", "[ASP]"))
 
     else:
         fprint(
