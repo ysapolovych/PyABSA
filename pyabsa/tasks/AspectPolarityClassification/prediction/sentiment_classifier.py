@@ -32,7 +32,7 @@ from ..dataset_utils.__plm__.data_utils_for_inference import BERTABSAInferenceDa
 from ..instructor.ensembler import APCEnsembler
 from pyabsa.utils.data_utils.dataset_manager import detect_infer_dataset
 from pyabsa.utils.pyabsa_utils import set_device, print_args, fprint, rprint
-
+from pyabsa.utils.exception_utils import CheckpointLoadException
 
 class SentimentClassifier(InferenceModel):
     task_code = TaskCodeOption.Aspect_Polarity_Classification
@@ -40,34 +40,34 @@ class SentimentClassifier(InferenceModel):
     def __init__(self, checkpoint=None, **kwargs):
         """
         Initialize the sentiment classifier for Aspect Polarity Classification (APC).
-        :param checkpoint: 
-            The checkpoint to initialize the classifier from. If this is not a string, it is interpreted as a tuple 
-            containing the model, configuration, and tokenizer. If it is a string, it should specify a directory 
+        :param checkpoint:
+            The checkpoint to initialize the classifier from. If this is not a string, it is interpreted as a tuple
+            containing the model, configuration, and tokenizer. If it is a string, it should specify a directory
             or file path containing a .state_dict, .model, .tokenizer, and .config.
         :type checkpoint: str or tuple, optional
-        :param auto_device: 
-            A boolean flag (passed via **kwargs) indicating whether the model should automatically select 
+        :param auto_device:
+            A boolean flag (passed via **kwargs) indicating whether the model should automatically select
             an available device (CPU or GPU) for inference or training.
         :type auto_device: bool
-        :param verbose: 
-            A boolean flag (passed via **kwargs) that controls verbosity, such as printing of configuration 
+        :param verbose:
+            A boolean flag (passed via **kwargs) that controls verbosity, such as printing of configuration
             details and loading status.
         :type verbose: bool
-        :param load_dataset: 
-            A boolean flag (passed via **kwargs) indicating whether to construct an inference dataset 
+        :param load_dataset:
+            A boolean flag (passed via **kwargs) indicating whether to construct an inference dataset
             (if needed) after loading the model.
         :type load_dataset: bool
-        :raises ValueError: 
-            If the provided checkpoint indicates a fine-tuned model (i.e., contains "fine-tuned") which is 
+        :raises ValueError:
+            If the provided checkpoint indicates a fine-tuned model (i.e., contains "fine-tuned") which is
             not directly supported by this interface.
-        :raises RuntimeError: 
-            If any error occurs while loading model artifacts from the specified checkpoint (e.g., 
+        :raises CheckpointLoadException:
+            If any error occurs while loading model artifacts from the specified checkpoint (e.g.,
             configuration, tokenizer, state dict).
-        This method loads the model, configuration, tokenizer, and sets up the dataset based on 
-        the type of model architecture (APC, BERT, or GloVe-based). It also ensures compatibility 
+        This method loads the model, configuration, tokenizer, and sets up the dataset based on
+        the type of model architecture (APC, BERT, or GloVe-based). It also ensures compatibility
         by automatically configuring the compute device if requested.
         """
-        
+
         super().__init__(checkpoint, task_code=self.task_code, **kwargs)
 
         # load from a trainer
@@ -133,11 +133,9 @@ class SentimentClassifier(InferenceModel):
                     print_args(self.config)
 
             except Exception as e:
-                raise RuntimeError(
-                    "Failed to load the model from {}! "
-                    "Please make sure the version of checkpoint and PyABSA are compatible."
-                    " Try to remove he checkpoint and download again"
-                    " \nException: {} ".format(checkpoint, e)
+                raise CheckpointLoadException(
+                    checkpoint_path=checkpoint,
+                    message=str(e),
                 )
 
         if isinstance(self.config.model, list):
@@ -274,7 +272,7 @@ class SentimentClassifier(InferenceModel):
         if text:
             self.dataset.prepare_infer_sample(text, ignore_error=ignore_error)
         else:
-            raise RuntimeError("Please specify your datasets path!")
+            raise RuntimeError("Please specify your datasets path or provide a dataset directly.")
         if isinstance(text, str):
             return self._run_prediction(print_result=print_result, **kwargs)[0]
         else:
