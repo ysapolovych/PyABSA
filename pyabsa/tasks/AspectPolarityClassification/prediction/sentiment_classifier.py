@@ -104,6 +104,8 @@ class SentimentClassifier(InferenceModel):
                     assert model_path is not None, (
                         f"Neither .model nor .state_dict files exist in {self.checkpoint}"
                     )
+                else:
+                    model_path = None
 
                 tokenizer_path = find_file_(
                     search_path=self.checkpoint,
